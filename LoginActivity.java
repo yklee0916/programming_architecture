@@ -10,6 +10,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
@@ -79,19 +80,26 @@ public class LoginActivity extends Activity {
         new Thread(new Runnable() {
           @Override
           public void run() {
+            HttpURLConnection conn = null;
+            OutputStream outputStream = null;
             try {
               URL url = new URL("https://api.example.com/login");
-              HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+              conn = (HttpURLConnection) url.openConnection();
               conn.setRequestMethod("POST");
               conn.setRequestProperty("Content-Type", "application/json");
               String jsonData = "{\"username\":\"" + username + "\",\"password\":\"" + password + "\"}";
-              conn.getOutputStream().write(jsonData.getBytes());
-              BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-              String response = reader.readLine();
+              outputStream = conn.getOutputStream();
+              outputStream.write(jsonData.getBytes());
+              outputStream.flush();
+              String response;
+              try (BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()))) {
+                response = reader.readLine();
+              }
+              final String finalResponse = response;
               runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                  if (response.contains("success")) {
+                  if (finalResponse.contains("success")) {
                     SharedPreferences prefs = getSharedPreferences("user", MODE_PRIVATE);
                     SharedPreferences.Editor editor = prefs.edit();
                     editor.putString("username", username);
@@ -116,6 +124,16 @@ public class LoginActivity extends Activity {
                   btnLogin.setEnabled(true);
                 }
               });
+            } finally {
+              if (outputStream != null) {
+                try {
+                  outputStream.close();
+                } catch (Exception e) {
+                }
+              }
+              if (conn != null) {
+                conn.disconnect();
+              }
             }
           }
         }).start();
