@@ -1,4 +1,4 @@
-package presenter.mock;
+package viewmodel.mock;
 
 import model.LoginUseCase;
 
