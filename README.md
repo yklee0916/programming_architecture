@@ -1,40 +1,43 @@
-# 3_mv_pattern (MV 패턴)
+# 4_mvc_pattern (MVC 패턴)
 
 ## 개요
 
-이 브랜치는 MV 패턴을 적용하여 View와 Model을 물리적으로 분리한 상태를 보여줍니다. `LoginActivity`는 View 역할로 두고, 로그인 유스케이스는 `LoginModel`에 두었습니다. 사용자 저장은 `UserStorage`, 공통 상수는 `Constants`로 분리했습니다.
+이 브랜치는 MVC 패턴을 적용하여 View와 Controller를 분리한 상태를 보여줍니다. `LoginActivity`는 Controller 역할로 두고, UI는 `LoginView`로 분리했습니다. 로그인 유스케이스는 `LoginModel`, 사용자 저장은 `UserStorage`, 공통 상수는 `Constants`로 분리했습니다.
 
 ## 현재 코드 상태
 
 ### 파일 구조
-- `view/LoginActivity.java`: View (UI 구성, 입력 처리, 화면 전환)
+- `controller/LoginActivity.java`: Controller (이벤트 처리, 화면 전환, Model 호출)
+- `view/LoginView.java`: View (UI 구성, 입력/표시)
 - `model/LoginModel.java`: Model (로그인 요청, 결과 판정)
 - `model/UserStorage.java`: 사용자 저장소
 - `model/Constants.java`: 공통 상수
 
 ### 코드 특징
-- **View와 Model 분리**
-  - UI 로직은 `view/LoginActivity`
+- **View와 Controller 분리**
+  - UI 렌더링은 `view/LoginView`
+  - 이벤트 제어는 `controller/LoginActivity`
+- **Controller에서 Model 호출**
   - 로그인 기능은 `model/LoginModel`
 - **저장소 분리**
   - 사용자 저장은 `model/UserStorage`
 - **상수 분리**
   - UI 문자열/검증 기준 등을 `Constants`로 분리
-- **간결한 View 흐름**
+-- **간결한 Controller 흐름**
   - `setupUI()` → `setupLoginButton()` → `performLogin()` 순서로 읽힘
 
-## 2_procedural_separation 대비 개선된 점
+## 3_mv_pattern 대비 개선된 점
 
-### 1. View/Model 분리
-- **개선**: 로그인 유스케이스를 `LoginModel`로 이동
+### 1. View/Controller 분리
+- **개선**: UI를 `LoginView`로 분리하고 `LoginActivity`를 Controller로 전환
 - **효과**:
-  - View는 입력/표시에 집중
-  - 로그인 로직 변경 영향이 View에 덜 전파됨
+  - UI와 이벤트 흐름이 분리됨
+  - View는 렌더링에 집중 가능
 
 ### 2. 파일 구조의 명확화
-- **개선**: `view/`, `model/` 폴더로 분리
+- **개선**: `controller/`, `view/`, `model/` 폴더로 분리
 - **효과**:
-  - 아키텍처 관점에서 레이어 경계가 보이기 시작함
+  - 아키텍처 경계가 더 명확해짐
   - 신규 기능 추가 시 파일 위치가 명확해짐
 
 ### 3. 저장소 분리
@@ -51,10 +54,10 @@
 
 ## 아직 남아있는 잔존 문제점 (아키텍처 관점)
 
-### 1. View에 남아있는 비즈니스 규칙
-- **문제**: 입력 검증(`validateInput`)과 에러 메시지 결정이 View에 남아 있음
+### 1. Controller에 남아있는 비즈니스 규칙
+- **문제**: 입력 검증(`validateInput`)과 에러 메시지 결정이 Controller에 남아 있음
 - **영향**:
-  - View가 도메인 규칙 일부를 포함하게 됨
+  - Controller가 도메인 규칙 일부를 포함하게 됨
   - 검증 로직 테스트가 UI 레이어에 묶임
 
 ### 2. 데이터/도메인 레이어 부재
@@ -77,4 +80,4 @@
 
 ## 참고
 
-이 코드는 MV 분리 단계의 교육 목적 예제입니다. 실제 프로덕션에서는 Validation, Repository, UseCase, DI 등을 단계적으로 추가하는 것을 권장합니다.
+이 코드는 MVC 분리 단계의 교육 목적 예제입니다. 실제 프로덕션에서는 Validation, Repository, UseCase, DI 등을 단계적으로 추가하는 것을 권장합니다.

@@ -1,27 +1,20 @@
-package view;
+package controller;
 
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.LinearLayout;
-import android.widget.TextView;
 
 import model.Constants;
 import model.LoginModel;
 import model.UserStorage;
+import view.LoginView;
 
 public class LoginActivity extends Activity {
 
   private LoginModel loginModel;
   private UserStorage userStorage;
-  private EditText etUsername;
-  private EditText etPassword;
-  private Button btnLogin;
-  private TextView tvError;
+  private LoginView loginView;
   
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -31,62 +24,18 @@ public class LoginActivity extends Activity {
   }
   
   private void setupUI() {
-    LinearLayout layout = new LinearLayout(this);
-    layout.setOrientation(LinearLayout.VERTICAL);
-    layout.setPadding(
-      Constants.LAYOUT_PADDING,
-      Constants.LAYOUT_PADDING,
-      Constants.LAYOUT_PADDING,
-      Constants.LAYOUT_PADDING
-    );
-
-    etUsername = new EditText(this);
-    etUsername.setHint(Constants.HINT_USERNAME);
-    etUsername.setLayoutParams(new LinearLayout.LayoutParams(
-      ViewGroup.LayoutParams.MATCH_PARENT,
-      ViewGroup.LayoutParams.WRAP_CONTENT
-    ));
-    layout.addView(etUsername);
-
-    etPassword = new EditText(this);
-    etPassword.setHint(Constants.HINT_PASSWORD);
-    etPassword.setInputType(android.text.InputType.TYPE_CLASS_TEXT
-      | android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD);
-    etPassword.setLayoutParams(new LinearLayout.LayoutParams(
-      ViewGroup.LayoutParams.MATCH_PARENT,
-      ViewGroup.LayoutParams.WRAP_CONTENT
-    ));
-    layout.addView(etPassword);
-
-    btnLogin = new Button(this);
-    btnLogin.setText(Constants.BUTTON_TEXT_LOGIN);
-    btnLogin.setLayoutParams(new LinearLayout.LayoutParams(
-      ViewGroup.LayoutParams.MATCH_PARENT,
-      ViewGroup.LayoutParams.WRAP_CONTENT
-    ));
-    layout.addView(btnLogin);
-
-    tvError = new TextView(this);
-    tvError.setText("");
-    tvError.setTextColor(android.graphics.Color.RED);
-    tvError.setVisibility(View.GONE);
-    tvError.setLayoutParams(new LinearLayout.LayoutParams(
-      ViewGroup.LayoutParams.MATCH_PARENT,
-      ViewGroup.LayoutParams.WRAP_CONTENT
-    ));
-    layout.addView(tvError);
-
-    setContentView(layout);
+    loginView = new LoginView(this);
+    setContentView(loginView.createRootView());
     loginModel = new LoginModel();
     userStorage = new UserStorage(getApplicationContext());
   }
   
   private void setupLoginButton() {
-    btnLogin.setOnClickListener(new View.OnClickListener() {
+    loginView.setOnLoginClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View v) {
-        String username = etUsername.getText().toString();
-        String password = etPassword.getText().toString();
+        String username = loginView.getUsername();
+        String password = loginView.getPassword();
         resetError();
         disableLoginButton();
         if (!validateInput(username, password)) {
@@ -98,15 +47,15 @@ public class LoginActivity extends Activity {
   }
   
   private void resetError() {
-    tvError.setVisibility(View.GONE);
+    loginView.clearError();
   }
   
   private void disableLoginButton() {
-    btnLogin.setEnabled(false);
+    loginView.setLoginEnabled(false);
   }
   
   private void enableLoginButton() {
-    btnLogin.setEnabled(true);
+    loginView.setLoginEnabled(true);
   }
   
   private boolean validateInput(String username, String password) {
@@ -124,8 +73,7 @@ public class LoginActivity extends Activity {
   }
   
   private void showError(String message) {
-    tvError.setText(message);
-    tvError.setVisibility(View.VISIBLE);
+    loginView.showError(message);
   }
   
   private void performLogin(String username, String password) {
