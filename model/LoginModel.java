@@ -6,21 +6,17 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-public class LoginModel {
+public class LoginModel implements LoginUseCase {
   private static final String API_LOGIN_URL = "https://api.example.com/login";
   private static final String SUCCESS_RESPONSE = "success";
   private static final String ERROR_LOGIN_FAILED = "로그인 실패";
   private static final String ERROR_NETWORK = "네트워크 오류";
 
-  public interface LoginCallback {
-    void onSuccess(String username);
-    void onFailure(String errorMessage);
-  }
-
   public LoginModel() {
   }
 
-  public void login(String username, String password, LoginCallback callback) {
+  @Override
+  public void login(String username, String password, LoginUseCase.Callback callback) {
     new Thread(new Runnable() {
       @Override
       public void run() {
