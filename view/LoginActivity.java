@@ -2,65 +2,63 @@ package view;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.view.View;
+import android.content.Intent;
+import androidx.databinding.DataBindingUtil;
+import androidx.databinding.Observable;
+import view.databinding.ActivityLoginBinding;
 
 import model.LoginModel;
+import model.LoginUseCase;
 import model.SharedPreferencesUserStorage;
 import model.UserStorage;
 import viewmodel.LoginViewModel;
 
 public class LoginActivity extends Activity {
 
-  private LoginModel loginModel;
-  private UserStorage userStorage;
-  private LoginView loginView;
   private LoginViewModel viewModel;
-  private LoginDataBinding dataBinding;
+  private ActivityLoginBinding binding;
+  private final Observable.OnPropertyChangedCallback navigateCallback =
+    new Observable.OnPropertyChangedCallback() {
+      @Override
+      public void onPropertyChanged(Observable sender, int propertyId) {
+        if (viewModel.getNavigateToMain().get()) {
+          navigateToMain();
+          viewModel.onNavigateHandled();
+        }
+      }
+    };
   
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    setupUI();
     setupViewModel();
     setupDataBinding();
-    setupLoginButton();
   }
 
   @Override
   protected void onDestroy() {
     super.onDestroy();
-    if (dataBinding != null) {
-      dataBinding.unbind();
+    if (viewModel != null) {
+      viewModel.getNavigateToMain().removeOnPropertyChangedCallback(navigateCallback);
     }
   }
 
-  private void setupUI() {
-    loginView = new LoginView(this);
-    setContentView(loginView.createRootView());
-    loginModel = new LoginModel();
-    userStorage = new SharedPreferencesUserStorage(getApplicationContext());
-  }
-
   private void setupViewModel() {
-    viewModel = new LoginViewModel(loginModel, userStorage);
+    LoginUseCase loginUseCase = new LoginModel();
+    UserStorage userStorage = new SharedPreferencesUserStorage(getApplicationContext());
+    viewModel = new LoginViewModel(loginUseCase, userStorage);
   }
 
   private void setupDataBinding() {
-    dataBinding = new LoginDataBinding(
-      viewModel,
-      loginView,
-      this
-    );
-    dataBinding.bind();
-  }
-  
-  private void setupLoginButton() {
-    loginView.setOnLoginClickListener(new View.OnClickListener() {
-      @Override
-      public void onClick(View v) {
-        viewModel.onLoginClicked(loginView.getUsername(), loginView.getPassword());
-      }
-    });
+    binding = DataBindingUtil.setContentView(this, R.layout.activity_login);
+    binding.setViewModel(viewModel);
+    viewModel.getNavigateToMain().addOnPropertyChangedCallback(navigateCallback);
   }
 
+  private void navigateToMain() {
+    Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+    startActivity(intent);
+    finish();
+  }
+  
 }

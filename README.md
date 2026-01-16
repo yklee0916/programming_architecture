@@ -1,102 +1,82 @@
-# 6_mvvm_pattern (MVVM + Observer 패턴)
+# 6_mvvm_pattern (MVVM + Data Binding)
 
 ## 개요
 
-이 브랜치는 MVVM 패턴을 Observer 방식으로 적용한 상태를 보여줍니다. `LoginActivity`는 View 구현체로 두고, UI 렌더링은 `LoginView`, 상태/로직은 `LoginViewModel`로 이동했습니다. 로그인 유스케이스는 `LoginModel`, 사용자 저장은 `UserStorage`, 공통 상수는 `Constants`로 분리했습니다.
+이 브랜치는 MVVM 패턴을 Data Binding 방식으로 적용한 상태를 보여줍니다. `LoginActivity`는 View 구현체로 두고, UI 렌더링은 XML + Data Binding으로, 상태/로직은 `LoginViewModel`로 이동했습니다. 로그인 유스케이스는 `LoginModel`, 사용자 저장은 `UserStorage`, 공통 상수는 `Constants`로 분리했습니다.
 
 ## MVVM 패턴 준수 사항
 - View는 UI 렌더링과 입력 전달만 담당
+- View는 Model을 직접 참조하지 않음
 - ViewModel은 상태/로직을 보유하고 View를 직접 참조하지 않음
-- 상태 변화는 Observer(또는 Data Binding)로 View에 전달
-- View 이벤트(예: onClick)는 ViewModel로 전달되어 처리
+- 상태 변화는 Data Binding으로 View에 전달
+- View 이벤트(예: onClick)는 Data Binding을 통해 ViewModel로 전달되어 처리
 - Model은 비즈니스 로직/데이터 접근을 담당
 
 ## 현재 코드 상태
 
 ### 파일 구조
 - `view/LoginActivity.java`: View 구현체 (입력 전달, 화면 전환)
-- `view/LoginView.java`: View 구성 요소 (UI 구성, 입력/표시)
-- `view/LoginDataBinding.java`: View-ViewModel 바인딩
+- `res/layout/activity_login.xml`: UI 레이아웃 + Data Binding
+- `res/values/strings.xml`: UI 문자열 리소스
 - `viewmodel/LoginViewModel.java`: ViewModel (상태/로직/유스케이스 호출)
-- `viewmodel/ObservableValue.java`: Observer 유틸
-- `model/LoginModel.java`: Model (로그인 요청, 결과 판정)
+- `model/LoginModel.java`: 입력 검증 + 로그인 처리
 - `model/UserStorage.java`: 사용자 저장소
 - `model/Constants.java`: 공통 상수
 
-### 코드 특징
-- **View와 ViewModel 분리**
-  - View는 입력 전달/표시에 집중
-  - ViewModel이 상태와 로직을 주도
-- **Observer 기반 바인딩**
-  - `ObservableValue`로 상태 변경을 전달
-- **수동 Data Binding 계층**
-  - `LoginDataBinding`에서 상태-UI 연결을 담당
-- **ViewModel에서 Model 호출**
-  - 로그인 기능은 `model/LoginModel`
-- **상수 분리**
-  - UI 문자열/검증 기준 등을 `Constants`로 분리
-- **간결한 View 흐름**
-  - `setupUI()` → `bindViewModel()` → `viewModel.onLoginClicked()` 순서로 읽힘
+## 5_mvp_pattern 대비 개선된 점 (MVVM의 장점)
 
-## 5_mvp_pattern 대비 개선된 점
-
-### 1. ViewModel 중심 구조
-- **개선**: 흐름 제어와 검증을 `LoginViewModel`로 이동
+### 1. View 의존성 완전 제거 (Decoupling)
+- **개선**: MVP의 Presenter는 View 인터페이스를 참조해야 했지만, ViewModel은 View를 전혀 모름
 - **효과**:
-  - View는 수동 렌더링에 집중
-  - 상태/로직이 ViewModel에 집중됨
+  - ViewModel이 View에 종속되지 않아 독립적인 유닛 테스트가 가능
+  - 디자인이 변경되어도 ViewModel 코드를 수정할 필요가 없음
 
-### 2. Observer 기반 상태 전달
-- **개선**: `ObservableValue`로 상태 변화를 전달
+### 2. UI 갱신 코드(Glue Code) 삭제
+- **개선**: Data Binding이 상태 변화를 감지해 UI를 자동으로 갱신
 - **효과**:
-  - View가 상태를 구독하는 구조가 명확해짐
-  - 상태 흐름이 명시적으로 드러남
+  - `view.showError()`, `setText()` 같은 반복적이고 지루한 UI 제어 코드가 사라짐
+  - 코드가 선언형(Declarative)으로 바뀌어 가독성 향상
 
-### 3. 수동 Data Binding 도입
-- **개선**: 바인딩 코드를 `LoginDataBinding`으로 분리
+### 3. 관계 확장성 (1:N 지원)
+- **개선**: MVP의 1:1 강결합과 달리, ViewModel 하나를 여러 View가 구독(Observe)할 수 있음
 - **효과**:
-  - View가 상태 구독 로직에서 분리됨
-  - 바인딩 책임이 한 곳에 모임
+  - 하나의 ViewModel을 Activity, Fragment, CustomView 등에서 동시에 사용 가능
+  - 구조 확장이 유연해짐
 
-### 4. 테스트 구조 단순화
-- **개선**: ViewModel이 `LoginUseCase`, `UserStorage`에만 의존
+### 4. 테스트 패러다임 변화 (행위 → 상태)
+- **개선**: `verify(view).method()` 같은 행위 검증 대신, `assert(viewModel.state)` 방식의 상태 검증 사용
 - **효과**:
-  - Fake/Mock 주입이 간단해짐
-  - Activity 없이도 로그인 흐름과 UI 반응을 검증 가능
+  - View Mocking이 필요 없어 테스트 작성이 훨씬 간단하고 직관적임
+  - 테스트 코드가 UI 구현 상세에 의존하지 않게 됨
 
-### 5. 역할의 명확화
-- **개선**: View/ViewModel/Model 책임이 분리됨
+### 5. 개발 병렬성 증대
+- **개선**: ViewModel(데이터/로직)과 XML(UI/디자인)이 명확히 분리됨
 - **효과**:
-  - 상태 관리와 UI 렌더링의 경계가 명확해짐
+  - 디자이너와 개발자가 동시에 작업하기 용이함
+  - 로직이 완성되지 않아도 더미 데이터를 바인딩하여 UI 테스트 가능
 
 ## 아직 남아있는 잔존 문제점 (아키텍처 관점)
 
-### 1. ViewModel의 비즈니스 집중
-- **문제**: 입력 검증과 에러 메시지 결정이 ViewModel에 집중됨
+### 1. Data Binding 의존
+- **문제**: Data Binding 환경 및 XML 규칙에 의존
 - **영향**:
-  - ViewModel이 비대해질 가능성
-  - 추가 규칙이 늘면 분리 필요 (Validator/UseCase)
+  - 레이아웃 변경 시 바인딩 규칙을 함께 관리해야 함
+  - 빌드 환경이 Data Binding 설정을 필요로 함
 
-### 2. 수동 바인딩 보일러플레이트
-- **문제**: `LoginDataBinding`을 수동으로 구성/해제해야 함
-- **영향**:
-  - 바인딩 코드가 View에 누적됨
-  - 데이터 바인딩 도입 전까지 중복이 발생
-
-### 3. 데이터/도메인 레이어 부재
+### 2. 데이터/도메인 레이어 부재
 - **문제**: `LoginModel`과 `UserStorage`는 분리됐지만
   Repository/UseCase 같은 경계가 없음
 - **영향**:
   - 변경 지점이 분산되어도 구조적 보호가 약함
   - 향후 레이어 확장이 필요
 
-### 4. 동시성/수명주기 대응 부족
+### 3. 동시성/수명주기 대응 부족
 - **문제**: Thread 기반 비동기 처리, 취소/중복 요청 제어 없음
 - **영향**:
   - 화면 종료 시 콜백 처리 위험
   - 다중 로그인 요청 제어가 어려움
 
-### 5. 의존성 주입 부재
+### 4. 의존성 주입 부재
 - **문제**: 네트워크 URL, 저장소 구현이 하드코딩됨
 - **영향**:
   - 테스트 대체가 어렵고 확장에 취약

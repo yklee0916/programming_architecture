@@ -1,69 +1,70 @@
 package viewmodel;
 
-import model.Constants;
+import androidx.databinding.ObservableBoolean;
+import androidx.databinding.ObservableField;
 import model.LoginUseCase;
 import model.UserStorage;
 
 public class LoginViewModel {
   private final LoginUseCase loginUseCase;
   private final UserStorage userStorage;
-  private final ObservableValue<String> errorMessage = new ObservableValue<>();
-  private final ObservableValue<Boolean> loginEnabled = new ObservableValue<>();
-  private final ObservableValue<Boolean> navigateToMain = new ObservableValue<>();
+  private final ObservableField<String> username = new ObservableField<>("");
+  private final ObservableField<String> password = new ObservableField<>("");
+  private final ObservableField<String> errorMessage = new ObservableField<>("");
+  private final ObservableBoolean loginEnabled = new ObservableBoolean(true);
+  private final ObservableBoolean navigateToMain = new ObservableBoolean(false);
 
   public LoginViewModel(LoginUseCase loginUseCase, UserStorage userStorage) {
     this.loginUseCase = loginUseCase;
     this.userStorage = userStorage;
-    loginEnabled.setValue(true);
   }
 
-  public ObservableValue<String> getErrorMessage() {
+  public ObservableField<String> getUsername() {
+    return username;
+  }
+
+  public ObservableField<String> getPassword() {
+    return password;
+  }
+
+  public ObservableField<String> getErrorMessage() {
     return errorMessage;
   }
 
-  public ObservableValue<Boolean> getLoginEnabled() {
+  public ObservableBoolean getLoginEnabled() {
     return loginEnabled;
   }
 
-  public ObservableValue<Boolean> getNavigateToMain() {
+  public ObservableBoolean getNavigateToMain() {
     return navigateToMain;
   }
 
-  public void onLoginClicked(String username, String password) {
-    errorMessage.setValue(null);
-    loginEnabled.setValue(false);
-    if (!validateInput(username, password)) {
-      loginEnabled.setValue(true);
-      return;
-    }
-    loginUseCase.login(username, password, new LoginUseCase.Callback() {
+  public void onLoginClicked() {
+    String currentUsername = safeValue(username);
+    String currentPassword = safeValue(password);
+    errorMessage.set("");
+    loginEnabled.set(false);
+    loginUseCase.login(currentUsername, currentPassword, new LoginUseCase.Callback() {
       @Override
       public void onSuccess(String user) {
         userStorage.save(user);
-        navigateToMain.setValue(true);
+        navigateToMain.set(true);
       }
 
       @Override
       public void onFailure(String error) {
-        errorMessage.setValue(error);
-        loginEnabled.setValue(true);
+        errorMessage.set(error);
+        loginEnabled.set(true);
       }
     });
   }
 
   public void onNavigateHandled() {
-    navigateToMain.setValue(false);
+    navigateToMain.set(false);
   }
 
-  private boolean validateInput(String username, String password) {
-    if (username.isEmpty()) {
-      errorMessage.setValue(Constants.ERROR_USERNAME_EMPTY);
-      return false;
-    }
-    if (password.length() < Constants.MIN_PASSWORD_LENGTH) {
-      errorMessage.setValue(Constants.ERROR_PASSWORD_TOO_SHORT);
-      return false;
-    }
-    return true;
+  private String safeValue(ObservableField<String> field) {
+    String value = field.get();
+    return value == null ? "" : value;
   }
 }

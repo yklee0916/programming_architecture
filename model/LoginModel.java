@@ -17,6 +17,11 @@ public class LoginModel implements LoginUseCase {
 
   @Override
   public void login(String username, String password, LoginUseCase.Callback callback) {
+    String validationError = validateInput(username, password);
+    if (validationError != null) {
+      callback.onFailure(validationError);
+      return;
+    }
     new Thread(new Runnable() {
       @Override
       public void run() {
@@ -62,6 +67,16 @@ public class LoginModel implements LoginUseCase {
         conn.disconnect();
       }
     }
+  }
+
+  private String validateInput(String username, String password) {
+    if (username == null || username.isEmpty()) {
+      return Constants.ERROR_USERNAME_EMPTY;
+    }
+    if (password == null || password.length() < Constants.MIN_PASSWORD_LENGTH) {
+      return Constants.ERROR_PASSWORD_TOO_SHORT;
+    }
+    return null;
   }
 
 }
