@@ -1,7 +1,6 @@
 package view;
 
 import android.app.Activity;
-import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 
@@ -9,7 +8,6 @@ import model.LoginModel;
 import model.SharedPreferencesUserStorage;
 import model.UserStorage;
 import viewmodel.LoginViewModel;
-import viewmodel.ObservableValue;
 
 public class LoginActivity extends Activity {
 
@@ -17,14 +15,23 @@ public class LoginActivity extends Activity {
   private UserStorage userStorage;
   private LoginView loginView;
   private LoginViewModel viewModel;
+  private LoginDataBinding dataBinding;
   
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setupUI();
     setupViewModel();
-    bindViewModel();
+    setupDataBinding();
     setupLoginButton();
+  }
+
+  @Override
+  protected void onDestroy() {
+    super.onDestroy();
+    if (dataBinding != null) {
+      dataBinding.unbind();
+    }
   }
 
   private void setupUI() {
@@ -38,50 +45,13 @@ public class LoginActivity extends Activity {
     viewModel = new LoginViewModel(loginModel, userStorage);
   }
 
-  private void bindViewModel() {
-    viewModel.getErrorMessage().observe(new ObservableValue.Observer<String>() {
-      @Override
-      public void onChanged(String message) {
-        runOnUiThread(new Runnable() {
-          @Override
-          public void run() {
-            if (message == null || message.isEmpty()) {
-              loginView.clearError();
-            } else {
-              loginView.showError(message);
-            }
-          }
-        });
-      }
-    });
-
-    viewModel.getLoginEnabled().observe(new ObservableValue.Observer<Boolean>() {
-      @Override
-      public void onChanged(Boolean enabled) {
-        runOnUiThread(new Runnable() {
-          @Override
-          public void run() {
-            loginView.setLoginEnabled(enabled != null && enabled);
-          }
-        });
-      }
-    });
-
-    viewModel.getNavigateToMain().observe(new ObservableValue.Observer<Boolean>() {
-      @Override
-      public void onChanged(Boolean shouldNavigate) {
-        if (shouldNavigate == null || !shouldNavigate) {
-          return;
-        }
-        runOnUiThread(new Runnable() {
-          @Override
-          public void run() {
-            navigateToMain();
-            viewModel.onNavigateHandled();
-          }
-        });
-      }
-    });
+  private void setupDataBinding() {
+    dataBinding = new LoginDataBinding(
+      viewModel,
+      loginView,
+      this
+    );
+    dataBinding.bind();
   }
   
   private void setupLoginButton() {
@@ -91,12 +61,6 @@ public class LoginActivity extends Activity {
         viewModel.onLoginClicked(loginView.getUsername(), loginView.getPassword());
       }
     });
-  }
-
-  private void navigateToMain() {
-    Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-    startActivity(intent);
-    finish();
   }
 
 }

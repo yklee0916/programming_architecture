@@ -15,6 +15,10 @@ public class ObservableValue<T> {
     }
   }
 
+  public void clearObserver() {
+    observer = null;
+  }
+
   public void setValue(T value) {
     this.value = value;
     if (observer != null) {

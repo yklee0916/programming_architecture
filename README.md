@@ -16,6 +16,7 @@
 ### 파일 구조
 - `view/LoginActivity.java`: View 구현체 (입력 전달, 화면 전환)
 - `view/LoginView.java`: View 구성 요소 (UI 구성, 입력/표시)
+- `view/LoginDataBinding.java`: View-ViewModel 바인딩
 - `viewmodel/LoginViewModel.java`: ViewModel (상태/로직/유스케이스 호출)
 - `viewmodel/ObservableValue.java`: Observer 유틸
 - `model/LoginModel.java`: Model (로그인 요청, 결과 판정)
@@ -28,6 +29,8 @@
   - ViewModel이 상태와 로직을 주도
 - **Observer 기반 바인딩**
   - `ObservableValue`로 상태 변경을 전달
+- **수동 Data Binding 계층**
+  - `LoginDataBinding`에서 상태-UI 연결을 담당
 - **ViewModel에서 Model 호출**
   - 로그인 기능은 `model/LoginModel`
 - **상수 분리**
@@ -49,13 +52,19 @@
   - View가 상태를 구독하는 구조가 명확해짐
   - 상태 흐름이 명시적으로 드러남
 
-### 3. 테스트 구조 단순화
+### 3. 수동 Data Binding 도입
+- **개선**: 바인딩 코드를 `LoginDataBinding`으로 분리
+- **효과**:
+  - View가 상태 구독 로직에서 분리됨
+  - 바인딩 책임이 한 곳에 모임
+
+### 4. 테스트 구조 단순화
 - **개선**: ViewModel이 `LoginUseCase`, `UserStorage`에만 의존
 - **효과**:
   - Fake/Mock 주입이 간단해짐
   - Activity 없이도 로그인 흐름과 UI 반응을 검증 가능
 
-### 4. 역할의 명확화
+### 5. 역할의 명확화
 - **개선**: View/ViewModel/Model 책임이 분리됨
 - **효과**:
   - 상태 관리와 UI 렌더링의 경계가 명확해짐
@@ -69,7 +78,7 @@
   - 추가 규칙이 늘면 분리 필요 (Validator/UseCase)
 
 ### 2. 수동 바인딩 보일러플레이트
-- **문제**: View가 `ObservableValue`를 직접 등록/해제해야 함
+- **문제**: `LoginDataBinding`을 수동으로 구성/해제해야 함
 - **영향**:
   - 바인딩 코드가 View에 누적됨
   - 데이터 바인딩 도입 전까지 중복이 발생
